@@ -1,0 +1,77 @@
+version: "3.13"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    environment:
+      - POSTGRES_DB=taskdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    deploy:
+      placement:
+        constraints: [node.role == worker]
+      restart_policy:
+        condition: on-failure
+  
+  backend:
+    image: task-backend
+    build: ./backend
+    depends_on:
+      - postgres
+    networks:
+      - backend
+      - frontend
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/taskdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    deploy:
+      placement:
+        constraints: [node.role == worker]
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+  frontend:
+    image: task-frontend
+    build: ./frontend
+    depends_on:
+      - backend
+    networks:
+      - frontend
+    ports:
+      - "3000:80"
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+  visualizer:
+    image: dockersamples/visualizer
+    ports:
+      - "8080:8080"
+    stop_grace_period: 1m30s
+    networks:
+      - frontend
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      placement:
+        constraints: [node.role == worker]
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  db-data:
