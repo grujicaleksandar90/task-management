@@ -30,7 +30,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
     ports:
-      - "8080:8080"
+      - "8082:8080"
     deploy:
       placement:
         constraints: [node.role == worker]
