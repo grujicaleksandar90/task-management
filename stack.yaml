@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 
 services:
   postgres:
@@ -9,14 +9,17 @@ services:
       - backend
     environment:
       - POSTGRES_DB=taskdb
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+    secrets:
+      - source: db_user
+        target: POSTGRES_USER
+      - source: db_password
+        target: POSTGRES_PASSWORD
     deploy:
       placement:
         constraints: [node.role == worker]
       restart_policy:
         condition: on-failure
-  
+
   backend:
     image: alegru90/task-backend:latest
     build: ./backend
@@ -27,8 +30,11 @@ services:
       - frontend
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/taskdb
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
+    secrets:
+      - source: db_user
+        target: SPRING_DATASOURCE_USERNAME
+      - source: db_password
+        target: SPRING_DATASOURCE_PASSWORD
     ports:
       - "8082:8080"
     deploy:
@@ -70,6 +76,12 @@ services:
     deploy:
       placement:
         constraints: [node.role == worker]
+
+secrets:
+  db_user:
+    external: true
+  db_password:
+    external: true
 
 networks:
   frontend:
