@@ -16,7 +16,7 @@ services:
         target: POSTGRES_PASSWORD
     deploy:
       placement:
-        constraints: [node.role == worker]
+        constraints: [node.role == manager]
       restart_policy:
         condition: on-failure
 
@@ -57,6 +57,8 @@ services:
     ports:
       - "3000:80"
     deploy:
+      placement:
+        constraints: [node.role == worker]
       replicas: 1
       update_config:
         parallelism: 2
@@ -75,7 +77,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       placement:
-        constraints: [node.role == worker]
+        constraints: [node.role == manager]
 
 secrets:
   db_user:
